@@ -1,0 +1,3 @@
+#!/bin/sh
+~/local/bin/phpize
+./configure --with-svnobj=/home/chris/local --with-svn-apr-config=/usr/bin/apr-config --enable-debug --with-php-config=/home/chris/local/bin/php-config

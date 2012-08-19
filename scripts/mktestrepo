@@ -1,0 +1,69 @@
+#!/bin/bash
+
+commit_idx=1
+
+repo_dir="/tmp/test_repo"
+repo_reloc_dir="/tmp/test_repo_reloc"
+co_dir="${repo_dir}_co"
+repo_url="file://${repo_dir}"
+
+function create_repo {
+	svnadmin create "$repo_dir"
+	svn checkout "$repo_url" "$co_dir"
+}
+
+function commit_repo {
+	pushd "$co_dir"
+	cd $co_dir
+	svn commit -m "mktestrepo - $commit_idx"
+	popd
+	commit_idx=$(($commit_idx+1))
+}
+
+create_repo
+ln -s $repo_dir $repo_reloc_dir
+
+# ----- REVISION 1
+echo 'this is a line' > $co_dir/justaline.txt
+svn add $co_dir/justaline.txt
+commit_repo
+
+# ----- REVISION 2
+echo '123' > $co_dir/numbers.txt
+svn add $co_dir/numbers.txt
+commit_repo
+
+# ----- REVISION 3
+mkdir $co_dir/sports
+echo 'baseball' > $co_dir/sports/baseball
+echo 'soccer' > $co_dir/sports/soccer
+svn add $co_dir/sports
+commit_repo
+
+# ----- REVISION 4
+echo 'locked file' > $co_dir/locked_file
+svn add $co_dir/locked_file
+commit_repo
+
+# ----- REVISION 5
+echo 'line 1' > $co_dir/this_file_changes
+svn add $co_dir/this_file_changes
+commit_repo
+# ----- REVISION 6
+echo 'line 2' >> $co_dir/this_file_changes
+commit_repo
+
+# ----- REVISION 7 AND 8
+svn copy $repo_url $repo_url/branch_for_switch -m "making branch for switch."
+svn switch $repo_url/branch_for_switch $co_dir
+echo '123456' > $co_dir/numbers.txt
+commit_repo
+svn switch $repo_url $co_dir
+
+# ----- REVISION 9
+svn propset svnobj:foo foo $co_dir/sports/soccer
+svn propset svnobj:bar bar $co_dir/sports/soccer
+svn propset svnobj:foo foo $co_dir/sports/baseball
+commit_repo
+
+rm -rf $co_dir
